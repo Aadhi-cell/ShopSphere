@@ -1,12 +1,17 @@
 const nodemailer = require('nodemailer');
 
+const SMTP_HOST = (process.env.SMTP_HOST || 'smtp.ethereal.email').trim();
+const SMTP_PORT = parseInt(process.env.SMTP_PORT || '587', 10);
+const SMTP_USER = (process.env.SMTP_USER || '').trim();
+const SMTP_PASS = (process.env.SMTP_PASS || '').trim();
+
 const transporter = nodemailer.createTransport({
-    host: process.env.SMTP_HOST || 'smtp.ethereal.email',
-    port: process.env.SMTP_PORT || 587,
-    secure: false, // true for 465, false for other ports
+    host: SMTP_HOST,
+    port: SMTP_PORT,
+    secure: SMTP_PORT === 465, // true for 465, false for other ports
     auth: {
-        user: process.env.SMTP_USER,
-        pass: process.env.SMTP_PASS,
+        user: SMTP_USER,
+        pass: SMTP_PASS,
     },
 });
 
@@ -17,7 +22,7 @@ const transporter = nodemailer.createTransport({
  * @param {Array} items - List of items
  */
 async function sendOrderConfirmation(to, order, items) {
-    if (!process.env.SMTP_USER) {
+    if (!SMTP_USER) {
         console.log('Skipping email: SMTP credentials not provided.');
         return;
     }
@@ -66,7 +71,7 @@ async function sendOrderConfirmation(to, order, items) {
 
     try {
         const info = await transporter.sendMail({
-            from: `"ShopSphere" <${process.env.SMTP_USER}>`,
+            from: `"ShopSphere" <${SMTP_USER}>`,
             to: to,
             subject: `Order Confirmation #${order.id}`,
             html: html,
@@ -115,14 +120,14 @@ async function sendSellerApprovalEmail(to, sellerName) {
         console.error('Failed to save email locally:', e);
     }
 
-    if (!process.env.SMTP_USER || (process.env.SMTP_USER.includes('gmail.com') && process.env.SMTP_PASS === 'Aadhi@2002')) {
+    if (!SMTP_USER || (SMTP_USER.includes('gmail.com') && SMTP_PASS === 'Aadhi@2002')) {
         console.log('Skipping real SMTP email sending (Credentials not setup properly). Local test copy saved.');
         return;
     }
 
     try {
         const info = await transporter.sendMail({
-            from: `"ShopSphere" <${process.env.SMTP_USER}>`,
+            from: `"ShopSphere" <${SMTP_USER}>`,
             to: to,
             subject: `Welcome to ShopSphere - Account Approved!`,
             html: html,
@@ -171,14 +176,14 @@ async function sendSellerRejectionEmail(to, sellerName, reason) {
         console.error('Failed to save email locally:', e);
     }
 
-    if (!process.env.SMTP_USER || (process.env.SMTP_USER.includes('gmail.com') && process.env.SMTP_PASS === 'Aadhi@2002')) {
+    if (!SMTP_USER || (SMTP_USER.includes('gmail.com') && SMTP_PASS === 'Aadhi@2002')) {
         console.log('Skipping real SMTP email sending (Credentials not setup properly). Local test copy saved.');
         return;
     }
 
     try {
         const info = await transporter.sendMail({
-            from: `"ShopSphere" <${process.env.SMTP_USER}>`,
+            from: `"ShopSphere" <${SMTP_USER}>`,
             to: to,
             subject: `ShopSphere Seller Application Status`,
             html: html,
@@ -223,14 +228,14 @@ async function sendSellerOTPEmail(to, otp) {
         console.error('Failed to save email locally:', e);
     }
 
-    if (!process.env.SMTP_USER || (process.env.SMTP_USER.includes('gmail.com') && process.env.SMTP_PASS === 'Aadhi@2002')) {
+    if (!SMTP_USER || (SMTP_USER.includes('gmail.com') && SMTP_PASS === 'Aadhi@2002')) {
         console.log('Skipping real SMTP OTP email sending. Local copy saved.');
         return;
     }
 
     try {
         await transporter.sendMail({
-            from: `"ShopSphere" <${process.env.SMTP_USER}>`,
+            from: `"ShopSphere" <${SMTP_USER}>`,
             to: to,
             subject: `${otp} is your ShopSphere Verification Code`,
             html: html,
@@ -242,5 +247,3 @@ async function sendSellerOTPEmail(to, otp) {
 }
 
 module.exports = { sendOrderConfirmation, sendSellerApprovalEmail, sendSellerRejectionEmail, sendSellerOTPEmail };
-
-
