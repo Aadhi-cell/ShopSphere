@@ -5,7 +5,7 @@ const SMTP_PORT = parseInt(process.env.SMTP_PORT || '587', 10);
 const SMTP_USER = (process.env.SMTP_USER || '').trim();
 const SMTP_PASS = (process.env.SMTP_PASS || '').trim();
 
-const transporter = nodemailer.createTransport({
+let transportConfig = {
     host: SMTP_HOST,
     port: SMTP_PORT,
     secure: SMTP_PORT === 465, // true for 465, false for other ports
@@ -13,7 +13,20 @@ const transporter = nodemailer.createTransport({
         user: SMTP_USER,
         pass: SMTP_PASS,
     },
-});
+};
+
+// If using Gmail, use service config for better compatibility and stability
+if (SMTP_HOST.includes('gmail') || SMTP_USER.includes('gmail.com')) {
+    transportConfig = {
+        service: 'gmail',
+        auth: {
+            user: SMTP_USER,
+            pass: SMTP_PASS,
+        },
+    };
+}
+
+const transporter = nodemailer.createTransport(transportConfig);
 
 /**
  * Send order confirmation email
