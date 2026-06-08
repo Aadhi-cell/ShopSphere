@@ -274,7 +274,7 @@ export default function Orders() {
                                     <div className="space-y-6">
                                         {order.items?.map((item, idx) => (
                                             <div key={idx} className="flex flex-col lg:flex-row gap-4 sm:gap-5 items-start lg:items-center py-4 border-t border-slate-100 first:border-none">
-                                                
+
                                                 <div className="flex flex-row gap-4 flex-1 w-full">
                                                     {/* Left: Product Image */}
                                                     <div className="w-[80px] h-[80px] sm:w-[100px] sm:h-[100px] rounded-lg overflow-hidden border border-slate-100 bg-white flex-shrink-0 p-2 shadow-inner">

@@ -1,10 +1,8 @@
 import React, { useEffect, useState, useRef } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
-import { getUser } from '../../auth';
 import { useCart } from '../../contexts/CartContext';
 import OrderSuccessModal from '../../components/ui/OrderSuccessModal';
-import { createCheckoutSession, confirmSession, getUserProfile, updateUserProfile } from '../../api/userApi';
-import useMobile from '../../hooks/useMobile';
+import { createCheckoutSession, confirmSession, getUserProfile, updateUserProfile, getPublicSettings } from '../../api/userApi';
 import {
   ShieldCheck,
   Lock,
@@ -38,19 +36,26 @@ export default function Checkout() {
   const [modalVariant, setModalVariant] = useState('success');
   const [placedOrderId, setPlacedOrderId] = useState(null);
   const [placedPaymentIntentId, setPlacedPaymentIntentId] = useState(null);
+  const [platformFee, setPlatformFee] = useState(7);
 
   // Dynamic price calculations
   const total = getCartTotal();
   const mrpTotal = cart.reduce((acc, item) => acc + (item.price * 1.25 * item.quantity), 0);
   const totalDiscount = mrpTotal - total;
-  const platformFee = 7;
 
   useEffect(() => {
     const fetchProfile = async () => {
       try {
         setLoadingProfile(true);
+        // Fetch public settings for dynamic platform fee
+        getPublicSettings().then(settings => {
+          if (settings && settings.platformFee !== undefined) {
+            setPlatformFee(settings.platformFee);
+          }
+        }).catch(err => console.error("Failed to load platform fee settings:", err));
+
         const profile = await getUserProfile();
-        if (profile && profile.address) {
+        if (profile && profile.address && Object.keys(profile.address).length > 0) {
           setAddress({
             fullName: profile.fullName || '',
             phone: profile.phone || '',
@@ -69,6 +74,14 @@ export default function Checkout() {
         }
       } catch (err) {
         console.error("Profile fetch error:", err);
+        // Fallback if fetch fails so user is not stuck on step 1
+        setAddress({
+          fullName: '',
+          phone: '',
+          line1: '', line2: '', city: '', state: '', postalCode: '', label: 'HOME'
+        });
+        setCurrentStep(2);
+        setIsEditingAddress(true);
       } finally {
         setLoadingProfile(false);
       }
@@ -85,16 +98,51 @@ export default function Checkout() {
     if (isSuccess === 'true' && !processingSession.current) {
       if (sessionId) {
         processingSession.current = true;
-        confirmSession(sessionId).then(res => {
-          if (res && res.orderId) setPlacedOrderId(res.orderId);
-        }).catch(err => console.error("Session confirm error", err))
-          .finally(() => {
-            setShowSuccessModal(true);
-            if (cart.length > 0) {
-              clearCart();
+        setModalVariant('verifying');
+        setShowSuccessModal(true);
+
+        let retries = 0;
+        const maxRetries = 5;
+
+        const checkSession = async () => {
+          try {
+            const res = await confirmSession(sessionId);
+            if (res && res.orderId) {
+              setPlacedOrderId(res.orderId);
+              setModalVariant('success');
+              if (cart.length > 0) {
+                clearCart();
+              }
+              return true;
             }
-          });
+          } catch (err) {
+            console.error("Session check attempt failed:", err);
+          }
+          return false;
+        };
+
+        const poll = async () => {
+          const success = await checkSession();
+          if (success) return;
+
+          const interval = setInterval(async () => {
+            retries++;
+            const success = await checkSession();
+            if (success || retries >= maxRetries) {
+              clearInterval(interval);
+              if (!success) {
+                setModalVariant('delayed');
+                if (cart.length > 0) {
+                  clearCart();
+                }
+              }
+            }
+          }, 2000);
+        };
+
+        poll();
       } else {
+        setModalVariant('success');
         setShowSuccessModal(true);
         if (cart.length > 0) clearCart();
       }

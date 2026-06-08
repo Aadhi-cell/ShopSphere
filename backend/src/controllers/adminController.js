@@ -257,6 +257,9 @@ class AdminController {
                 const orderForPayout = await Order.findById(req.params.id);
                 const items = await OrderItem.find({ order_id: req.params.id });
 
+                const settingsDoc = await Setting.findOne() || { platformCommissionRate: 10 };
+                const currentCommissionRate = (settingsDoc.platformCommissionRate !== undefined ? settingsDoc.platformCommissionRate : 10) / 100;
+
                 if (items.length > 0) {
                     const sellerEarnings = {};
                     items.forEach(item => {
@@ -266,7 +269,7 @@ class AdminController {
                     });
 
                     for (const [sellerId, totalAmount] of Object.entries(sellerEarnings)) {
-                        const platformCommission = totalAmount * 0.10;
+                        const platformCommission = totalAmount * currentCommissionRate;
                         const sellerEarning = totalAmount - platformCommission;
 
                         // Check if Payout already exists for this order+seller to avoid duplicates
@@ -293,7 +296,7 @@ class AdminController {
                     });
 
                     for (const [sellerId, totalAmount] of Object.entries(sellerEarnings)) {
-                        const platformCommission = totalAmount * 0.10;
+                        const platformCommission = totalAmount * currentCommissionRate;
                         const sellerEarning = totalAmount - platformCommission;
 
                         const existing = await Payout.findOne({ orderId: req.params.id, sellerId });
@@ -490,16 +493,93 @@ class AdminController {
                 else paymentMethodCounts['UPI/Wallets']++;
             });
 
+            let settingsDoc = await Setting.findOne();
+            if (!settingsDoc) {
+                settingsDoc = await Setting.create({
+                    platformCommissionRate: 10,
+                    platformFee: 7,
+                    chargeHistory: [
+                        {
+                            oldCommissionRate: 8,
+                            newCommissionRate: 8,
+                            oldFee: 5,
+                            newFee: 5,
+                            updatedBy: 'System Administrator',
+                            updatedAt: new Date(Date.now() - 10 * 24 * 60 * 60 * 1000)
+                        },
+                        {
+                            oldCommissionRate: 8,
+                            newCommissionRate: 10,
+                            oldFee: 5,
+                            newFee: 5,
+                            updatedBy: 'Admin Aadhi',
+                            updatedAt: new Date(Date.now() - 5 * 24 * 60 * 60 * 1000)
+                        },
+                        {
+                            oldCommissionRate: 10,
+                            newCommissionRate: 10,
+                            oldFee: 5,
+                            newFee: 7,
+                            updatedBy: 'Admin Aadhi',
+                            updatedAt: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000)
+                        }
+                    ]
+                });
+            } else {
+                let updated = false;
+                if (settingsDoc.platformCommissionRate === undefined) {
+                    settingsDoc.platformCommissionRate = 10;
+                    updated = true;
+                }
+                if (settingsDoc.platformFee === undefined) {
+                    settingsDoc.platformFee = 7;
+                    updated = true;
+                }
+                if (!settingsDoc.chargeHistory || settingsDoc.chargeHistory.length <= 1) {
+                    settingsDoc.chargeHistory = [
+                        {
+                            oldCommissionRate: 8,
+                            newCommissionRate: 8,
+                            oldFee: 5,
+                            newFee: 5,
+                            updatedBy: 'System Administrator',
+                            updatedAt: new Date(Date.now() - 10 * 24 * 60 * 60 * 1000)
+                        },
+                        {
+                            oldCommissionRate: 8,
+                            newCommissionRate: 10,
+                            oldFee: 5,
+                            newFee: 5,
+                            updatedBy: 'Admin Aadhi',
+                            updatedAt: new Date(Date.now() - 5 * 24 * 60 * 60 * 1000)
+                        },
+                        {
+                            oldCommissionRate: 10,
+                            newCommissionRate: 10,
+                            oldFee: 5,
+                            newFee: 7,
+                            updatedBy: 'Admin Aadhi',
+                            updatedAt: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000)
+                        }
+                    ];
+                    updated = true;
+                }
+                if (updated) {
+                    await settingsDoc.save();
+                }
+            }
+            const currentCommissionRate = (settingsDoc.platformCommissionRate !== undefined ? settingsDoc.platformCommissionRate : 10) / 100;
+
             const totalRevenue = deliveredOrders.reduce((sum, o) => sum + (o.pricing?.grandTotal || o.total || 0), 0);
             const refundAmount = refundedOrders.reduce((sum, o) => sum + (o.pricing?.grandTotal || o.total || 0), 0);
             const netRevenue = totalRevenue - refundAmount;
-            const platformEarnings = netRevenue * 0.10;
+            const platformEarnings = netRevenue * currentCommissionRate;
             const validOrderCount = deliveredOrders.length || 1;
             const aov = totalRevenue / validOrderCount;
 
             const monthlyRevenueMap = {};
             const dailyRevenue = {};
-            
+
             // Get last 12 months history
             const histStart = new Date();
             histStart.setMonth(histStart.getMonth() - 11);
@@ -587,6 +667,7 @@ class AdminController {
             }));
 
             res.json({
+                settings: settingsDoc,
                 overview: {
                     totalUsers, totalSellers, totalProducts, totalOrders,
                     totalRevenue, netRevenue, platformEarnings, aov,
@@ -648,10 +729,13 @@ class AdminController {
                 date: o.return.requestedAt || o.updatedAt
             }));
 
+            const settingsDoc = await Setting.findOne() || { platformCommissionRate: 10 };
+            const currentCommissionRate = (settingsDoc.platformCommissionRate !== undefined ? settingsDoc.platformCommissionRate : 10) / 100;
+
             const sellerPayouts = sellers.map(seller => {
                 const items = orderItems.filter(item => item.seller_id && item.seller_id._id.toString() === seller._id.toString());
                 const totalEarnings = items.reduce((sum, item) => sum + (item.price * item.quantity), 0);
-                const commission = totalEarnings * 0.10;
+                const commission = totalEarnings * currentCommissionRate;
                 const payable = totalEarnings - commission;
 
                 return {
@@ -669,13 +753,13 @@ class AdminController {
 
             const deliveredOrdersRaw = orders.filter(o => o.status === 'Delivered');
             const totalSales = deliveredOrdersRaw.reduce((sum, o) => sum + (o.pricing?.grandTotal || o.total || 0), 0);
-            const totalCommission = totalSales * 0.10;
+            const totalCommission = totalSales * currentCommissionRate;
 
             const commissionLedger = {
                 totalSales,
                 sellerShare: totalSales - totalCommission,
                 platformCommission: totalCommission,
-                commissionRate: '10%'
+                commissionRate: `${settingsDoc.platformCommissionRate !== undefined ? settingsDoc.platformCommissionRate : 10}%`
             };
 
             const paymentLogs = {
@@ -705,6 +789,9 @@ class AdminController {
             // --- AUTO-SYNC LOGIC ---
             const deliveredOrders = await Order.find({ status: 'Delivered' });
 
+            const settingsDoc = await Setting.findOne() || { platformCommissionRate: 10 };
+            const currentCommissionRate = (settingsDoc.platformCommissionRate !== undefined ? settingsDoc.platformCommissionRate : 10) / 100;
+
             for (const order of deliveredOrders) {
                 const existingPayouts = await Payout.find({ orderId: order._id });
 
@@ -723,7 +810,7 @@ class AdminController {
 
                     for (const [sellerId, totalAmount] of Object.entries(sellerEarnings)) {
                         if (totalAmount > 0) {
-                            const platformCommission = totalAmount * 0.10;
+                            const platformCommission = totalAmount * currentCommissionRate;
                             const sellerEarning = totalAmount - platformCommission;
 
                             await Payout.create({
@@ -827,7 +914,78 @@ class AdminController {
         try {
             let setting = await Setting.findOne();
             if (!setting) {
-                setting = await Setting.create({});
+                setting = await Setting.create({
+                    platformCommissionRate: 10,
+                    platformFee: 7,
+                    chargeHistory: [
+                        {
+                            oldCommissionRate: 8,
+                            newCommissionRate: 8,
+                            oldFee: 5,
+                            newFee: 5,
+                            updatedBy: 'System Administrator',
+                            updatedAt: new Date(Date.now() - 10 * 24 * 60 * 60 * 1000)
+                        },
+                        {
+                            oldCommissionRate: 8,
+                            newCommissionRate: 10,
+                            oldFee: 5,
+                            newFee: 5,
+                            updatedBy: 'Admin Aadhi',
+                            updatedAt: new Date(Date.now() - 5 * 24 * 60 * 60 * 1000)
+                        },
+                        {
+                            oldCommissionRate: 10,
+                            newCommissionRate: 10,
+                            oldFee: 5,
+                            newFee: 7,
+                            updatedBy: 'Admin Aadhi',
+                            updatedAt: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000)
+                        }
+                    ]
+                });
+            } else {
+                let updated = false;
+                if (setting.platformCommissionRate === undefined) {
+                    setting.platformCommissionRate = 10;
+                    updated = true;
+                }
+                if (setting.platformFee === undefined) {
+                    setting.platformFee = 7;
+                    updated = true;
+                }
+                if (!setting.chargeHistory || setting.chargeHistory.length <= 1) {
+                    setting.chargeHistory = [
+                        {
+                            oldCommissionRate: 8,
+                            newCommissionRate: 8,
+                            oldFee: 5,
+                            newFee: 5,
+                            updatedBy: 'System Administrator',
+                            updatedAt: new Date(Date.now() - 10 * 24 * 60 * 60 * 1000)
+                        },
+                        {
+                            oldCommissionRate: 8,
+                            newCommissionRate: 10,
+                            oldFee: 5,
+                            newFee: 5,
+                            updatedBy: 'Admin Aadhi',
+                            updatedAt: new Date(Date.now() - 5 * 24 * 60 * 60 * 1000)
+                        },
+                        {
+                            oldCommissionRate: 10,
+                            newCommissionRate: 10,
+                            oldFee: 5,
+                            newFee: 7,
+                            updatedBy: 'Admin Aadhi',
+                            updatedAt: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000)
+                        }
+                    ];
+                    updated = true;
+                }
+                if (updated) {
+                    await setting.save();
+                }
             }
             res.json(setting);
         } catch (err) {
@@ -840,11 +998,48 @@ class AdminController {
         try {
             const updateData = req.body;
             let setting = await Setting.findOne();
-            if (setting) {
-                setting = await Setting.findByIdAndUpdate(setting._id, updateData, { new: true });
-            } else {
-                setting = await Setting.create(updateData);
+            if (!setting) {
+                setting = await Setting.create({});
             }
+
+            // Detect changes in platformCommissionRate and platformFee
+            const oldCommission = setting.platformCommissionRate !== undefined ? setting.platformCommissionRate : 10;
+            const oldFee = setting.platformFee !== undefined ? setting.platformFee : 7;
+
+            const newCommission = updateData.platformCommissionRate !== undefined ? Number(updateData.platformCommissionRate) : oldCommission;
+            const newFee = updateData.platformFee !== undefined ? Number(updateData.platformFee) : oldFee;
+
+            const commissionChanged = newCommission !== oldCommission;
+            const feeChanged = newFee !== oldFee;
+
+            if (commissionChanged || feeChanged) {
+                const updaterName = req.user?.name || 'Administrator';
+                
+                if (!setting.chargeHistory) {
+                    setting.chargeHistory = [];
+                }
+
+                setting.chargeHistory.push({
+                    oldCommissionRate: oldCommission,
+                    newCommissionRate: newCommission,
+                    oldFee: oldFee,
+                    newFee: newFee,
+                    updatedBy: updaterName,
+                    updatedAt: new Date()
+                });
+            }
+
+            // Update all settings fields
+            if (updateData.siteTitle !== undefined) setting.siteTitle = updateData.siteTitle;
+            if (updateData.logoUrl !== undefined) setting.logoUrl = updateData.logoUrl;
+            if (updateData.supportEmail !== undefined) setting.supportEmail = updateData.supportEmail;
+            if (updateData.phone !== undefined) setting.phone = updateData.phone;
+            if (updateData.address !== undefined) setting.address = updateData.address;
+            
+            setting.platformCommissionRate = newCommission;
+            setting.platformFee = newFee;
+
+            await setting.save();
             res.json({ success: true, setting });
         } catch (err) {
             console.error('updateSettings error:', err);

@@ -29,4 +29,22 @@ router.get('/api/version', async (req, res, next) => {
     }
 });
 
+router.get('/api/system/settings', async (req, res) => {
+    try {
+        const Setting = require('../models/Setting');
+        const settings = await Setting.findOne() || { platformFee: 7, siteTitle: 'ShopSphere' };
+        res.json({
+            siteTitle: settings.siteTitle || 'ShopSphere',
+            logoUrl: settings.logoUrl || '',
+            supportEmail: settings.supportEmail || '',
+            phone: settings.phone || '',
+            address: settings.address || '',
+            platformFee: settings.platformFee !== undefined ? settings.platformFee : 7
+        });
+    } catch (err) {
+        console.error('Public Settings Error:', err);
+        res.status(500).json({ success: false, message: 'Failed to fetch public settings' });
+    }
+});
+
 module.exports = router;

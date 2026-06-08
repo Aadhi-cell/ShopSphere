@@ -4,6 +4,7 @@ const Order = require('../models/Order');
 const OrderItem = require('../models/OrderItem');
 const User = require('../models/User');
 const { sendOrderConfirmation } = require('../services/emailService');
+const Notification = require('../models/Notification');
 
 class OrderController {
     constructor() {
@@ -128,11 +129,19 @@ class OrderController {
                     price: item.priceAtPurchase
                 });
 
+                // Save to DB so it persists in the notification dropdown
+                await Notification.create({
+                    sellerId: item.seller_id,
+                    title: 'New Order Received! 🎉',
+                    message: `You have received a new order for ${item.name} (Qty: ${item.quantity}).`,
+                    type: 'order'
+                });
+
                 // Emit real-time notification to the seller
                 if (this.io) {
                     this.io.to(item.seller_id.toString()).emit('newOrder', {
                         orderId: savedOrder._id,
-                        message: 'You have a new order!'
+                        message: `You have received a new order for ${item.name} (Qty: ${item.quantity}).`
                     });
                 }
             }
@@ -205,11 +214,15 @@ class OrderController {
             }
 
             // Platform fee
+            const Setting = require('../models/Setting');
+            const settingsDoc = await Setting.findOne() || { platformFee: 7 };
+            const currentFee = settingsDoc.platformFee !== undefined ? settingsDoc.platformFee : 7;
+
             line_items.push({
                 price_data: {
                     currency: 'inr',
                     product_data: { name: 'Platform Fee' },
-                    unit_amount: 700,
+                    unit_amount: currentFee * 100,
                 },
                 quantity: 1,
             });
@@ -371,6 +384,22 @@ class OrderController {
                     quantity: item.quantity,
                     price: item.priceAtPurchase
                 });
+
+                // Save to DB so it persists in the notification dropdown
+                await Notification.create({
+                    sellerId: item.seller_id,
+                    title: 'New Order Received! 🎉',
+                    message: `You have received a new COD order for ${item.name} (Qty: ${item.quantity}).`,
+                    type: 'order'
+                });
+
+                // Emit real-time notification to the seller
+                if (this.io) {
+                    this.io.to(item.seller_id.toString()).emit('newOrder', {
+                        orderId: order._id,
+                        message: `You have received a new COD order for ${item.name} (Qty: ${item.quantity}).`
+                    });
+                }
             }
 
             res.status(201).json({ success: true, orderId: order._id });

@@ -190,9 +190,9 @@ export default function SellerSupport() {
     });
 
     return (
-        <div className="flex flex-col h-[750px] bg-white rounded-[32px] border border-slate-200 shadow-sm overflow-hidden">
+        <div className="flex flex-col h-[600px] sm:h-[750px] bg-white rounded-[24px] sm:rounded-[32px] border border-slate-200 shadow-sm overflow-hidden">
             {/* Header / Tabs */}
-            <div className="px-8 py-6 border-b border-slate-100 flex flex-col md:flex-row md:items-center justify-between gap-4 shrink-0 bg-white z-10">
+            <div className="px-5 sm:px-8 py-5 sm:py-6 border-b border-slate-100 flex flex-col md:flex-row md:items-center justify-between gap-4 shrink-0 bg-white z-10">
                 <div>
                     <h2 className="text-xl font-[1000] text-slate-900 tracking-tight flex items-center gap-2">
                         <LifeBuoy size={24} className="text-primary" /> Support Command Center
@@ -200,22 +200,22 @@ export default function SellerSupport() {
                     <p className="text-xs text-slate-400 font-bold uppercase tracking-widest mt-0.5">Global Resolution & Assistance</p>
                 </div>
 
-                <div className="flex bg-slate-100/80 p-1 rounded-2xl">
+                <div className="flex bg-slate-100/80 p-1 rounded-2xl overflow-x-auto no-scrollbar max-w-full">
                     <button
                         onClick={() => { setActiveTab('mytickets'); setSelectedTicket(null); }}
-                        className={`px-6 py-2.5 rounded-xl font-black text-xs uppercase tracking-widest transition-all ${activeTab === 'mytickets' ? 'bg-white text-primary shadow-sm' : 'text-slate-500 hover:text-slate-700'}`}
+                        className={`px-4 sm:px-6 py-2.5 rounded-xl font-black text-xs uppercase tracking-widest transition-all whitespace-nowrap shrink-0 ${activeTab === 'mytickets' ? 'bg-white text-primary shadow-sm' : 'text-slate-500 hover:text-slate-700'}`}
                     >
                         Tickets Log
                     </button>
                     <button
                         onClick={() => setActiveTab('new')}
-                        className={`px-6 py-2.5 rounded-xl font-black text-xs uppercase tracking-widest transition-all ${activeTab === 'new' ? 'bg-white text-primary shadow-sm' : 'text-slate-500 hover:text-slate-700'}`}
+                        className={`px-4 sm:px-6 py-2.5 rounded-xl font-black text-xs uppercase tracking-widest transition-all whitespace-nowrap shrink-0 ${activeTab === 'new' ? 'bg-white text-primary shadow-sm' : 'text-slate-500 hover:text-slate-700'}`}
                     >
                         Open New
                     </button>
                     <button
                         onClick={() => { setActiveTab('messages'); }}
-                        className={`px-6 py-2.5 rounded-xl font-black text-xs uppercase tracking-widest transition-all flex items-center gap-1.5 ${activeTab === 'messages' ? 'bg-white text-primary shadow-sm' : 'text-slate-500 hover:text-slate-700'}`}
+                        className={`px-4 sm:px-6 py-2.5 rounded-xl font-black text-xs uppercase tracking-widest transition-all flex items-center gap-1.5 whitespace-nowrap shrink-0 ${activeTab === 'messages' ? 'bg-white text-primary shadow-sm' : 'text-slate-500 hover:text-slate-700'}`}
                     >
                         <Mail size={12} /> Messages
                     </button>
@@ -224,10 +224,10 @@ export default function SellerSupport() {
 
             <div className="flex-1 flex overflow-hidden">
                 {activeTab === 'messages' ? (
-                    <div className="flex-1 flex overflow-hidden">
+                    <div className="flex-1 flex flex-col md:flex-row overflow-hidden">
                         {/* Messages Sidebar */}
-                        <div className="w-[340px] border-r border-slate-100 flex flex-col bg-slate-50/20 shrink-0">
-                            <div className="p-4 border-b border-slate-50 flex items-center justify-between">
+                        <div className="w-full md:w-[340px] border-b md:border-b-0 md:border-r border-slate-100 flex flex-col bg-slate-50/20 shrink-0 h-[250px] md:h-auto">
+                            <div className="px-5 sm:px-8 py-4 border-b border-slate-50 flex items-center justify-between">
                                 <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Direct Messages</span>
                                 <button
                                     onClick={() => setMsgView('compose')}
@@ -251,7 +251,7 @@ export default function SellerSupport() {
                                         <div
                                             key={msg._id}
                                             onClick={() => { setSelectedMessage(msg); setMsgView('inbox'); }}
-                                            className={`p-5 cursor-pointer transition-all border-l-4 ${selectedMessage?._id === msg._id ? 'bg-white border-primary shadow-sm' : 'bg-transparent border-transparent hover:bg-white'}`}
+                                            className={`px-5 sm:px-8 py-5 cursor-pointer transition-all border-l-4 ${selectedMessage?._id === msg._id ? 'bg-white border-primary shadow-sm' : 'bg-transparent border-transparent hover:bg-white'}`}
                                         >
                                             <div className="flex items-center justify-between mb-1">
                                                 <span className="text-[11px] font-black text-slate-900 truncate">{msg.subject}</span>
@@ -270,7 +270,7 @@ export default function SellerSupport() {
                         {/* Messages Thread / Compose */}
                         <div className="flex-1 flex flex-col bg-white">
                             {msgView === 'compose' ? (
-                                <div className="flex-1 overflow-y-auto p-8 no-scrollbar">
+                                <div className="flex-1 overflow-y-auto p-5 sm:p-8 no-scrollbar">
                                     <h3 className="text-lg font-[1000] text-slate-900 mb-6 tracking-tight">New Message to Admin</h3>
                                     <form onSubmit={handleSendMessage} className="space-y-5 max-w-2xl">
                                         <div>
@@ -310,7 +310,7 @@ export default function SellerSupport() {
                                     <p className="text-sm font-bold text-slate-400">Select a message to view the thread</p>
                                 </div>
                             ) : (
-                                <div className="flex-1 overflow-y-auto p-8 no-scrollbar space-y-6">
+                                <div className="flex-1 overflow-y-auto p-5 sm:p-8 no-scrollbar space-y-6">
                                     <h3 className="text-base font-black text-slate-900">{selectedMessage.subject}</h3>
                                     {/* Original */}
                                     <div className="flex items-start gap-4">
@@ -337,9 +337,9 @@ export default function SellerSupport() {
                         </div>
                     </div>
                 ) : activeTab === 'new' ? (
-                    <div className="flex-1 overflow-y-auto p-10 bg-slate-50/30 no-scrollbar">
+                    <div className="flex-1 overflow-y-auto p-4 sm:p-10 bg-slate-50/30 no-scrollbar">
                         <div className="max-w-3xl mx-auto space-y-8">
-                            <div className="bg-white p-8 rounded-[32px] border border-slate-200 shadow-sm">
+                            <div className="bg-white p-5 sm:p-8 rounded-[24px] sm:rounded-[32px] border border-slate-200 shadow-sm">
                                 <h3 className="text-lg font-[1000] text-slate-900 mb-6 tracking-tight">Generate Support Ticket</h3>
                                 <form onSubmit={handleCreateTicket} className="space-y-6">
                                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -415,11 +415,11 @@ export default function SellerSupport() {
                         </div>
                     </div>
                 ) : (
-                    <div className="flex-1 flex overflow-hidden">
+                    <div className="flex-1 flex flex-col md:flex-row overflow-hidden">
                         {/* Inbox Sidebar */}
-                        <div className="w-[380px] border-r border-slate-100 flex flex-col bg-slate-50/20 shrink-0">
+                        <div className="w-full md:w-[380px] border-b md:border-b-0 md:border-r border-slate-100 flex flex-col bg-slate-50/20 shrink-0 h-[250px] md:h-auto">
                             {/* Search Tickets */}
-                            <div className="p-4 border-b border-slate-50 space-y-3">
+                            <div className="px-5 sm:px-8 py-4 border-b border-slate-50 space-y-3">
                                 <div className="relative">
                                     <Search size={16} className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-300" />
                                     <input
@@ -450,7 +450,7 @@ export default function SellerSupport() {
                                         <p className="text-[10px] font-black tracking-[0.2em] uppercase text-slate-300">Syncing Cases...</p>
                                     </div>
                                 ) : filteredTickets.length === 0 ? (
-                                    <div className="p-10 text-center">
+                                    <div className="px-5 sm:px-8 py-10 text-center">
                                         <EmptyState
                                             title="No cases found"
                                             description="Your support history is clear. If you need help, open a new ticket."
@@ -462,7 +462,7 @@ export default function SellerSupport() {
                                         <div
                                             key={ticket._id}
                                             onClick={() => setSelectedTicket(ticket)}
-                                            className={`p-5 cursor-pointer transition-all border-l-4 ${selectedTicket?._id === ticket._id ? 'bg-white border-primary shadow-sm ring-1 ring-slate-100' : 'bg-transparent border-transparent hover:bg-white hover:border-slate-100'}`}
+                                            className={`px-5 sm:px-8 py-5 cursor-pointer transition-all border-l-4 ${selectedTicket?._id === ticket._id ? 'bg-white border-primary shadow-sm ring-1 ring-slate-100' : 'bg-transparent border-transparent hover:bg-white hover:border-slate-100'}`}
                                         >
                                             <div className="flex items-center justify-between mb-2">
                                                 <span className="text-[9px] font-black text-slate-400 uppercase tracking-tighter">Case #{ticket.ticketId}</span>
@@ -500,7 +500,7 @@ export default function SellerSupport() {
                             ) : (
                                 <>
                                     {/* Thread Header */}
-                                    <div className="px-8 py-4 border-b border-slate-50 flex items-center justify-between bg-slate-50/20 shrink-0">
+                                    <div className="px-5 sm:px-8 py-4 border-b border-slate-50 flex items-center justify-between bg-slate-50/20 shrink-0">
                                         <div className="flex items-center gap-4">
                                             <div className={`w-10 h-10 rounded-xl flex items-center justify-center text-white shadow-lg ${getStatusColor(selectedTicket.status)}`}>
                                                 <TicketIcon size={18} strokeWidth={2.5} />
@@ -519,7 +519,7 @@ export default function SellerSupport() {
                                     </div>
 
                                     {/* Conversation Scroll Area */}
-                                    <div className="flex-1 overflow-y-auto p-8 bg-slate-50/10 no-scrollbar space-y-8">
+                                    <div className="flex-1 overflow-y-auto p-5 sm:p-8 bg-slate-50/10 no-scrollbar space-y-8">
                                         {/* Original Message */}
                                         <div className="flex items-start gap-4">
                                             <div className="w-10 h-10 bg-white shadow-sm border border-slate-100 rounded-xl flex items-center justify-center font-black text-slate-400 shrink-0">ME</div>
@@ -553,7 +553,7 @@ export default function SellerSupport() {
 
                                     {/* Action Bar / Reply Input */}
                                     {selectedTicket.status !== 'Closed' && selectedTicket.status !== 'Resolved' ? (
-                                        <div className="p-6 bg-white border-t border-slate-100">
+                                        <div className="px-5 sm:px-8 py-6 bg-white border-t border-slate-100">
                                             <div className="relative">
                                                 <textarea
                                                     rows={1}

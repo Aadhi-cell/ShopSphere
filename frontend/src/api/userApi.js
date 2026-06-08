@@ -74,6 +74,11 @@ class UserAPI {
         const response = await apiClient.post('/api/delivery/check', { pincode });
         return response.data;
     };
+
+    static async getPublicSettings() {
+        const response = await apiClient.get('/api/system/settings');
+        return response.data;
+    };
 }
 
 
@@ -94,4 +99,5 @@ export const getCMSPage = UserAPI.getCMSPage;
 export const getActiveAnnouncements = UserAPI.getActiveAnnouncements;
 export const checkDelivery = UserAPI.checkDelivery;
 export const trackBanner = UserAPI.trackBanner;
+export const getPublicSettings = UserAPI.getPublicSettings;
 

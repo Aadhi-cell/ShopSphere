@@ -76,7 +76,6 @@ export default function Home() {
 
                 setProducts(productsData || []);
                 setBanners(bannersData || []);
-                console.log('Home Banners Loaded:', bannersData?.length, bannersData);
             } catch (err) {
                 console.error('Unexpected error in fetchData:', err);
             } finally {

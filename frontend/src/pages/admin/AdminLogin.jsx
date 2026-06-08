@@ -52,11 +52,11 @@ export default function AdminLogin() {
                         </div>
                     </div>
                     <h2 className={`font-[900] text-text-main tracking-tight ${isMobile ? 'text-lg' : 'text-[22px]'}`}>
-                        Admin <span className="text-gray-900 border-b-2 border-gray-900">Portal</span>
+                        Admin <span className="text-primary border-b-2 border-primary">Portal</span>
                     </h2>
                     <p className="text-text-muted text-[11px] mt-0.5 font-medium">Please enter your secure credentials</p>
                 </div>
-
+ 
                 <form onSubmit={onSubmit} className="flex flex-col gap-3.5">
                     <div>
                         <div className="text-[10px] text-text-muted font-[800] uppercase tracking-wider mb-1 ml-1">Admin Email</div>
@@ -66,11 +66,11 @@ export default function AdminLogin() {
                             placeholder="admin@site.com"
                             type="email"
                             className="w-full px-5 py-3 rounded-xl border border-glass-border bg-gray-50 text-[13px] text-gray-900 outline-none transition-all duration-300 focus:bg-white focus:shadow-[0_2px_12px_rgba(0,0,0,0.06)]"
-                            onFocus={e => e.target.style.borderColor = '#111827'}
+                            onFocus={e => e.target.style.borderColor = '#2874f0'}
                             onBlur={e => e.target.style.borderColor = ''}
                         />
                     </div>
-
+ 
                     <div>
                         <div className="text-[10px] text-text-muted font-[800] uppercase tracking-wider mb-1 ml-1">Security Key</div>
                         <div className="relative">
@@ -80,7 +80,7 @@ export default function AdminLogin() {
                                 placeholder="Enter security key"
                                 type={showPassword ? 'text' : 'password'}
                                 className="w-full px-5 py-3 pr-12 rounded-xl border border-glass-border bg-gray-50 text-[13px] text-gray-900 outline-none transition-all duration-300 focus:bg-white focus:shadow-[0_2px_12px_rgba(0,0,0,0.06)]"
-                                onFocus={e => e.target.style.borderColor = '#111827'}
+                                onFocus={e => e.target.style.borderColor = '#2874f0'}
                                 onBlur={e => e.target.style.borderColor = ''}
                             />
                             <button
@@ -88,31 +88,31 @@ export default function AdminLogin() {
                                 onClick={() => setShowPassword(!showPassword)}
                                 className="absolute right-4 top-1/2 -translate-y-1/2 bg-transparent border-none p-0 flex items-center justify-center text-gray-400 transition-colors cursor-pointer"
                                 style={{ background: 'none', border: 'none', padding: 0 }}
-                                onMouseEnter={e => e.currentTarget.style.color = '#111827'}
+                                onMouseEnter={e => e.currentTarget.style.color = '#2874f0'}
                                 onMouseLeave={e => e.currentTarget.style.color = ''}
                             >
                                 {showPassword ? <FaEyeSlash size={18} /> : <FaEye size={18} />}
                             </button>
                         </div>
                     </div>
-
+ 
                     {error && (
                         <div className="glass-card bg-red-500/10 text-red-600 p-3 rounded-xl text-[13px] text-center font-semibold border border-red-500/20">
                             {error}
                         </div>
                     )}
-
+ 
                     <button
                         type="submit"
                         disabled={loading}
                         className={`w-full p-[18px] text-white border-none rounded-2xl text-base font-[900] mt-2 transition-all ${loading ? 'opacity-70 cursor-not-allowed' : 'cursor-pointer hover:shadow-lg hover:-translate-y-0.5'}`}
                         style={{
-                            background: '#111827',
+                            background: '#2874f0',
                             color: '#ffffff',
                             display: 'block',
                             visibility: 'visible',
                             opacity: loading ? 0.7 : 1,
-                            boxShadow: '0 12px 24px rgba(0,0,0,0.1)'
+                            boxShadow: '0 20px 40px rgba(40,116,240,0.25)'
                         }}
                     >
                         {loading ? 'AUTHENTICATING...' : 'SECURE SIGN IN'}

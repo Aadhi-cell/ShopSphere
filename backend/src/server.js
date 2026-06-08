@@ -89,9 +89,15 @@ app.use('/api/content', contentRoutes);
 app.use('/api/delivery', deliveryRoutes);
 
 
+// // Start Post-DB Services
+// PromotionService.start();
+
+// server.listen(PORT, '127.0.0.1', () => {
+//   console.log(`API server listening on http://127.0.0.1:${PORT}`);
+// });
 // Start Post-DB Services
 PromotionService.start();
 
-server.listen(PORT, '127.0.0.1', () => {
-  console.log(`API server listening on http://127.0.0.1:${PORT}`);
+server.listen(PORT, () => {
+  console.log(`API server listening on port ${PORT}`);
 });

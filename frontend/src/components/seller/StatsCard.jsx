@@ -2,7 +2,7 @@ import React from 'react';
 import { Clock } from 'lucide-react';
 
 const StatsCard = ({ title, value, icon: Icon, color, subtext, trend }) => (
-    <div className="bg-white p-6 rounded-[24px] border border-gray-100 shadow-[0_4px_24px_rgba(0,0,0,0.02)] hover:shadow-[0_8px_32px_rgba(0,0,0,0.04)] transition-all group flex flex-col justify-between cursor-default">
+    <div className="bg-white p-4 sm:p-6 rounded-[24px] border border-gray-100 shadow-[0_4px_24px_rgba(0,0,0,0.02)] hover:shadow-[0_8px_32px_rgba(0,0,0,0.04)] transition-all group flex flex-col justify-between cursor-default">
         <div>
             <div className="flex items-start justify-between mb-8">
                 <div className="p-3 bg-gray-50 border border-gray-100 rounded-2xl group-hover:bg-gray-900 transition-all">

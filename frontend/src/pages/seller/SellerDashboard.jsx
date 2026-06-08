@@ -39,7 +39,9 @@ import {
     Bell,
     X,
     MessageSquare,
-    Menu
+    Menu,
+    CheckCircle2,
+    ShieldAlert
 } from 'lucide-react';
 
 import StatsCard from '../../components/seller/StatsCard';
@@ -162,17 +164,33 @@ export default function SellerDashboard() {
             fetchData();
         };
 
+        const handleNewOrder = (data) => {
+            fetchData();
+            const notif = {
+                type: 'order',
+                id: Date.now(),
+                title: 'New Order Received! 🎉',
+                message: data.message || 'You have a new order to process.',
+                orderId: data.orderId
+            };
+            setToast(notif);
+            setTimeout(() => setToast(null), 5000);
+            
+            // Also refresh notifications if you store order notifs in DB
+            fetchNotifications(); 
+        };
+
         const handleStatusUpdate = (data) => {
             updateSeller({ status: data.status, rejectionReason: data.rejectionReason });
             fetchData();
         };
 
-        socket.on('newOrder', handleRefresh);
+        socket.on('newOrder', handleNewOrder);
         socket.on('orderStatusUpdate', handleRefresh);
         socket.on('sellerStatusUpdate', handleStatusUpdate);
 
         return () => {
-            socket.off('newOrder', handleRefresh);
+            socket.off('newOrder', handleNewOrder);
             socket.off('orderStatusUpdate', handleRefresh);
             socket.off('sellerStatusUpdate', handleStatusUpdate);
         };
@@ -299,22 +317,37 @@ export default function SellerDashboard() {
             </aside>
             {/* Toast Notification */}
             {toast && (
-                <div className="fixed bottom-6 right-6 z-[200] max-w-sm w-full animate-in slide-in-from-bottom-4 duration-300">
-                    <div className="bg-white rounded-2xl shadow-2xl shadow-slate-900/15 border border-slate-200 p-4 flex items-start gap-3">
-                        <div className="w-10 h-10 rounded-xl bg-blue-100 flex items-center justify-center shrink-0">
-                            <MessageSquare size={18} className="text-blue-600" />
+                <div className="fixed bottom-6 left-6 right-6 sm:left-auto sm:right-6 z-[200] sm:w-full sm:max-w-sm animate-in slide-in-from-bottom-4 duration-300">
+                    <div className={`bg-white rounded-2xl shadow-2xl shadow-slate-900/15 border border-slate-200 p-4 flex items-start gap-3 ${toast.type === 'order' ? 'border-l-4 border-l-emerald-500' : ''}`}>
+                        <div className={`w-10 h-10 rounded-xl flex items-center justify-center shrink-0 ${toast.type === 'order' ? 'bg-emerald-100 text-emerald-600' : 'bg-blue-100 text-blue-600'}`}>
+                            {toast.type === 'order' ? <Package size={18} /> : <MessageSquare size={18} />}
                         </div>
                         <div className="flex-1 min-w-0">
                             <div className="flex items-center justify-between gap-2 mb-1">
-                                <span className="text-[12px] font-black text-slate-900">New reply from {toast.senderName || 'Admin'}</span>
+                                <span className="text-[12px] font-black text-slate-900">
+                                    {toast.type === 'order' ? toast.title : `New reply from ${toast.senderName || 'Admin'}`}
+                                </span>
                                 <button onClick={() => setToast(null)} className="text-slate-300 hover:text-slate-500 shrink-0"><X size={14} /></button>
                             </div>
-                            <p className="text-[11px] font-bold text-blue-600 mb-0.5 truncate">{toast.subject}</p>
-                            <p className="text-[11px] text-slate-500 font-medium line-clamp-2">{toast.preview}</p>
-                            <button
-                                onClick={() => { setActiveTab('support'); setToast(null); }}
-                                className="mt-2 text-[10px] font-black text-blue-600 uppercase tracking-widest hover:underline"
-                            >View Message →</button>
+                            {toast.type === 'order' ? (
+                                <>
+                                    <p className="text-[11px] font-bold text-emerald-600 mb-0.5 truncate">{toast.message}</p>
+                                    <p className="text-[11px] text-slate-500 font-medium line-clamp-1">ID: {toast.orderId}</p>
+                                    <button
+                                        onClick={() => { setActiveTab('orders'); setToast(null); }}
+                                        className="mt-2 text-[10px] font-black text-emerald-600 uppercase tracking-widest hover:underline"
+                                    >View Order →</button>
+                                </>
+                            ) : (
+                                <>
+                                    <p className="text-[11px] font-bold text-blue-600 mb-0.5 truncate">{toast.subject}</p>
+                                    <p className="text-[11px] text-slate-500 font-medium line-clamp-2">{toast.preview}</p>
+                                    <button
+                                        onClick={() => { setActiveTab('support'); setToast(null); }}
+                                        className="mt-2 text-[10px] font-black text-blue-600 uppercase tracking-widest hover:underline"
+                                    >View Message →</button>
+                                </>
+                            )}
                         </div>
                     </div>
                 </div>
@@ -392,7 +425,7 @@ export default function SellerDashboard() {
                                     </button>
 
                                     {bellOpen && (
-                                        <div className="absolute right-[-40px] sm:right-0 top-full mt-2.5 w-[300px] sm:w-80 bg-white rounded-2xl border border-slate-200 shadow-2xl shadow-slate-900/10 z-50 overflow-hidden">
+                                        <div className="absolute right-[-10px] sm:right-0 top-full mt-2.5 w-[280px] sm:w-80 bg-white rounded-2xl border border-slate-200 shadow-2xl shadow-slate-900/10 z-50 overflow-hidden">
                                             <div className="px-5 py-4 border-b border-slate-100 flex items-center justify-between">
                                                 <div className="flex items-center gap-2">
                                                     <Bell size={14} className="text-slate-500" />
@@ -451,7 +484,7 @@ export default function SellerDashboard() {
                                     </button>
 
                                     {profileOpen && (
-                                        <div className="absolute right-0 top-full mt-2.5 w-[280px] sm:w-72 bg-white rounded-2xl border border-slate-200 shadow-2xl shadow-slate-900/10 z-50 overflow-hidden animate-in fade-in slide-in-from-top-2 duration-200">
+                                        <div className="absolute right-0 top-full mt-2.5 w-[260px] sm:w-72 bg-white rounded-2xl border border-slate-200 shadow-2xl shadow-slate-900/10 z-50 overflow-hidden animate-in fade-in slide-in-from-top-2 duration-200">
                                             {/* Profile Header */}
                                             <div className="px-5 py-5 bg-gradient-to-br from-slate-900 to-slate-800 text-white">
                                                 <div className="flex items-center gap-4">
@@ -544,7 +577,7 @@ export default function SellerDashboard() {
             </div>
 
             {/* Dashboard Workspace — pt-[170px] compensates for fixed header height */}
-            <div className="max-w-[1400px] mx-auto px-4 md:px-8 pt-[140px] md:pt-[170px] pb-10">
+            <div className="max-w-[1400px] mx-auto px-4 md:px-8 pt-[160px] md:pt-[170px] pb-10">
 
                 {/* Moderation Status Banner */}
                 {seller && seller.status !== 'approved' && (
@@ -608,7 +641,7 @@ export default function SellerDashboard() {
                         {activeTab === 'overview' && (
                             <div className="space-y-12">
                                 {/* Stats Grid */}
-                                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+                                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6">
                                     <StatsCard
                                         title="Gross Sales"
                                         value={formatCurrency(stats?.totalSales || 0)}
@@ -732,26 +765,6 @@ export default function SellerDashboard() {
 
                                     {/* Side Widgets */}
                                     <div className="space-y-8">
-                                        {/* Promotion Card */}
-                                        <div className="bg-slate-900 rounded-[24px] p-8 text-white relative overflow-hidden group shadow-2xl">
-                                            <div className="absolute -bottom-12 -right-12 w-48 h-48 bg-primary/20 rounded-full blur-[60px] group-hover:bg-primary/30 transition-all duration-700"></div>
-                                            <div className="relative z-10">
-                                                <div className="inline-flex items-center gap-2 px-3 py-1 bg-white/10 rounded-full text-[10px] font-black uppercase tracking-widest text-primary border border-white/10 mb-6">
-                                                    Pro Tip
-                                                </div>
-                                                <h3 className="text-[26px] font-[1000] leading-tight mb-4 tracking-tighter italic">Boost Listing <span className="text-primary not-italic">Visibility</span></h3>
-                                                <p className="text-slate-400 font-bold text-sm leading-relaxed mb-8">
-                                                    Add 5+ high-resolution images to increase conversion rates by up to 35% on average.
-                                                </p>
-                                                <button
-                                                    onClick={() => navigate('/seller/add-product')}
-                                                    className="w-full py-4.5 bg-white text-slate-900 rounded-2xl font-[900] text-sm hover:bg-slate-50 transition-all flex items-center justify-center gap-2 active:scale-95"
-                                                >
-                                                    Optimization Hub <ChevronRight size={18} />
-                                                </button>
-                                            </div>
-                                        </div>
-
                                         {/* Low Stock Alerts */}
                                         <div className={`bg-white rounded-[24px] border p-8 shadow-sm transition-all duration-300 ${stats?.lowStockProducts > 0 ? 'border-amber-200 bg-amber-50/10' : 'border-slate-200'}`}>
                                             <div className="flex items-center gap-3 mb-6">
@@ -795,20 +808,20 @@ export default function SellerDashboard() {
 
                         {activeTab === 'orders' && (
                             <div className="">
-                                {/* Professional Header for Orders */}
-                                <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 bg-white p-6 rounded-[24px] border border-slate-200 shadow-sm mb-8">
+                                {/* Minimalist Professional Header */}
+                                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
                                     <div>
-                                        <h2 className="text-[18px] font-[1000] text-slate-900 tracking-tight mb-1">Order Operations</h2>
-                                        <p className="text-slate-500 text-[10px] font-bold uppercase tracking-widest">Real-time Management & Logistics</p>
+                                        <h2 className="text-2xl font-black text-slate-900 tracking-tight">Orders</h2>
+                                        <p className="text-slate-600 font-bold text-sm mt-1">Manage your recent orders and shipments.</p>
                                     </div>
-                                    <div className="flex items-center gap-2 overflow-x-auto no-scrollbar py-1">
+                                    <div className="flex items-center gap-1 overflow-x-auto no-scrollbar bg-slate-100/50 p-1 rounded-lg border border-slate-200">
                                         {['All', 'Pending', 'Processing', 'Shipped', 'Delivered', 'Cancelled', 'Returned'].map(f => (
                                             <button
                                                 key={f}
                                                 onClick={() => setOrderFilter(f)}
-                                                className={`px-4 py-2 rounded-xl font-[900] text-[9px] transition-all border shrink-0 uppercase tracking-widest cursor-pointer ${orderFilter === f
-                                                    ? 'bg-slate-900 border-slate-900 text-white shadow-md'
-                                                    : 'bg-slate-50 border-slate-100 text-slate-400 hover:text-slate-600 hover:border-slate-200'
+                                                className={`px-3 py-1.5 rounded-md text-sm font-black transition-all shrink-0 ${orderFilter === f
+                                                    ? 'bg-slate-900 text-white shadow-sm ring-1 ring-slate-800'
+                                                    : 'text-slate-600 hover:text-slate-900 hover:bg-slate-50'
                                                     }`}
                                             >
                                                 {f}
@@ -818,147 +831,237 @@ export default function SellerDashboard() {
                                 </div>
 
                                 {filteredOrders.length === 0 ? (
-                                    <div className="bg-white rounded-[32px] border border-slate-100 py-24 flex items-center justify-center">
-                                        <EmptyState
-                                            title="No Orders Operations"
-                                            description={orderFilter === 'All' ? "You don't have any orders yet." : `No orders found in the ${orderFilter} state.`}
-                                            icon={History}
-                                        />
+                                    <div className="bg-white rounded-xl border border-slate-200 py-20 flex flex-col items-center justify-center text-center shadow-sm">
+                                        <div className="w-12 h-12 bg-slate-50 rounded-full flex items-center justify-center mb-3 border border-slate-100">
+                                            <History size={20} className="text-slate-400" />
+                                        </div>
+                                        <h3 className="text-base font-black text-slate-900">No orders found</h3>
+                                        <p className="text-sm font-bold text-slate-500 mt-1">{orderFilter === 'All' ? "You don't have any orders yet." : `No orders match the ${orderFilter} status.`}</p>
                                     </div>
                                 ) : (
-                                    <div className="flex flex-col gap-4">
-                                        {filteredOrders.map(order => (
-                                            <div key={order._id} className="bg-white rounded-[20px] border border-slate-200 shadow-sm hover:shadow-md transition-all duration-300 overflow-hidden flex min-h-[220px]">
-                                                {/* Status Accent Sidebar */}
-                                                <div className={`w-1.5 shrink-0 ${statusColors[order.status] || 'bg-slate-300'}`} />
+                                    <div className="bg-white rounded-xl border border-slate-200 overflow-hidden shadow-sm">
+                                        {/* Table Header */}
+                                        <div className="hidden lg:grid grid-cols-12 gap-4 px-6 py-3 bg-slate-50/80 border-b border-slate-200 text-xs font-black text-slate-600 uppercase tracking-wider">
+                                            <div className="col-span-3">Order</div>
+                                            <div className="col-span-3">Customer</div>
+                                            <div className="col-span-2">Status</div>
+                                            <div className="col-span-2 text-right">Amount</div>
+                                            <div className="col-span-2 text-right">Actions</div>
+                                        </div>
 
-                                                <div className="flex-1 flex flex-col lg:flex-row divide-y lg:divide-y-0 lg:divide-x divide-slate-100">
-                                                    {/* 1. Order ID & Products Section */}
-                                                    <div className="flex-1 p-5 space-y-4">
-                                                        <div className="flex items-center justify-between">
-                                                            <div>
-                                                                <div className="flex items-center gap-2 mb-1">
-                                                                    <span className="text-[10px] font-black text-slate-400 uppercase tracking-tighter">ORDER ID</span>
-                                                                    <span className="text-[11px] font-black text-slate-900 font-mono tracking-tight">#{order._id.slice(-8).toUpperCase()}</span>
+                                        {/* List Items */}
+                                        <div className="divide-y divide-slate-100">
+                                            {filteredOrders.map(order => (
+                                                <div key={order._id} className="p-4 lg:p-0 transition-colors hover:bg-slate-50/30 group">
+                                                    {/* Row Header Data */}
+                                                    <div className="grid grid-cols-1 lg:grid-cols-12 gap-4 lg:px-6 lg:py-4 items-center">
+                                                        {/* Mobile Top Row: Custom Layout */}
+                                                        <div className="flex flex-col gap-3 lg:hidden mb-2">
+                                                            <div className="flex items-center justify-between">
+                                                                <div>
+                                                                    <div className="font-black text-slate-900 text-sm">#{order._id.slice(-8).toUpperCase()}</div>
+                                                                    <div className="text-[11px] font-bold text-slate-500 mt-0.5">{new Date(order.timeline?.placedAt || order.createdAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric', hour: '2-digit', minute: '2-digit' })}</div>
                                                                 </div>
-                                                                <p className="text-[10px] font-bold text-slate-400 flex items-center gap-1">
-                                                                    <Clock size={10} /> {new Date(order.timeline?.placedAt || order.createdAt).toLocaleString()}
-                                                                </p>
-                                                            </div>
-                                                            <div className={`px-2 py-1 rounded-lg text-[8px] font-black uppercase tracking-widest border ${order.status === 'Delivered' ? 'bg-emerald-50 text-emerald-600 border-emerald-100' :
-                                                                order.status === 'Cancelled' ? 'bg-red-50 text-red-600 border-red-100' :
-                                                                    'bg-amber-50 text-amber-600 border-amber-100'
+                                                                <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-black uppercase tracking-wider border ${
+                                                                    order.status === 'Delivered' ? 'bg-emerald-50 text-emerald-700 border-emerald-200' :
+                                                                    order.status === 'Cancelled' ? 'bg-red-50 text-red-700 border-red-200' :
+                                                                    'bg-amber-50 text-amber-700 border-amber-200'
                                                                 }`}>
+                                                                    {order.status}
+                                                                </span>
+                                                            </div>
+
+                                                            <div className="flex items-center justify-between bg-slate-50/80 p-3 rounded-xl border border-slate-100">
+                                                                <div className="text-sm">
+                                                                    <div className="font-black text-slate-800">{order.customer?.name || order.user_id?.name || 'Guest User'}</div>
+                                                                    <div className="font-bold text-slate-500 truncate mt-0.5 text-xs max-w-[120px]">{order.customer?.email || order.user_id?.email}</div>
+                                                                </div>
+                                                                <div className="text-right font-black text-emerald-600 text-base">
+                                                                    {formatCurrency(order.sellerTotal || 0)}
+                                                                </div>
+                                                            </div>
+
+                                                            {nextStatusMap[order.status] && (
+                                                                <div className="flex justify-end mt-1">
+                                                                    <button
+                                                                        onClick={() => handleUpdateStatus(order._id, nextStatusMap[order.status])}
+                                                                        className="w-full sm:w-auto px-4 py-2.5 bg-slate-900 text-white text-xs font-black rounded-xl hover:bg-slate-800 transition-all shadow-sm shadow-slate-900/10 flex items-center justify-center gap-2 uppercase tracking-widest"
+                                                                    >
+                                                                        <CheckCircle2 size={14} /> Mark as {nextStatusMap[order.status]}
+                                                                    </button>
+                                                                </div>
+                                                            )}
+                                                        </div>
+
+                                                        {/* Desktop Columns */}
+                                                        <div className="hidden lg:block col-span-3">
+                                                            <div className="font-black text-slate-900 text-sm">#{order._id.slice(-8).toUpperCase()}</div>
+                                                            <div className="text-xs font-bold text-slate-500 mt-0.5">{new Date(order.timeline?.placedAt || order.createdAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric', hour: '2-digit', minute: '2-digit' })}</div>
+                                                        </div>
+
+                                                        <div className="hidden lg:block col-span-3 text-sm">
+                                                            <div className="font-black text-slate-800">{order.customer?.name || order.user_id?.name || 'Guest User'}</div>
+                                                            <div className="font-bold text-slate-500 truncate mt-0.5 text-xs">{order.customer?.email || order.user_id?.email}</div>
+                                                        </div>
+
+                                                        <div className="hidden lg:flex col-span-2 items-center">
+                                                            <span className={`inline-flex items-center px-2.5 py-1 rounded-md text-xs font-black border ${
+                                                                order.status === 'Delivered' ? 'bg-emerald-50 text-emerald-700 border-emerald-200' :
+                                                                order.status === 'Cancelled' ? 'bg-red-50 text-red-700 border-red-200' :
+                                                                'bg-amber-50 text-amber-700 border-amber-200'
+                                                            }`}>
                                                                 {order.status}
-                                                            </div>
+                                                            </span>
                                                         </div>
 
-                                                        <div className="space-y-3">
-                                                            {order.items.map((item, idx) => (
-                                                                <div key={idx} className="flex gap-3 group">
-                                                                    <div className="w-12 h-12 rounded-xl bg-slate-50 border border-slate-100 flex-shrink-0 overflow-hidden">
-                                                                        <img src={getImageUrl(item.imageUrl)} alt={item.name} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500" />
-                                                                    </div>
-                                                                    <div className="flex-1 min-w-0 py-0.5">
-                                                                        <h4 className="text-[11px] font-black text-slate-800 truncate mb-1">{item.name}</h4>
-                                                                        <div className="flex items-center gap-3">
-                                                                            <span className="text-[10px] font-black text-[#2874f0]">{formatCurrency(item.priceAtPurchase)}</span>
-                                                                            <span className="text-[9px] font-bold text-slate-400 uppercase tracking-tighter">Qty: {item.quantity}</span>
-                                                                        </div>
-                                                                    </div>
-                                                                </div>
-                                                            ))}
+                                                        <div className="hidden lg:block col-span-2 text-right font-black text-slate-900 text-sm">
+                                                            {formatCurrency(order.sellerTotal || 0)}
                                                         </div>
 
-                                                        <div className="pt-3 flex items-center justify-between border-t border-dashed border-slate-100">
-                                                            <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Revenue</span>
-                                                            <span className="text-[14px] font-black text-slate-900">{formatCurrency(order.sellerTotal || 0)}</span>
-                                                        </div>
-                                                    </div>
-
-                                                    {/* 2. Customer & Delivery Section */}
-                                                    <div className="w-full lg:w-72 p-5 bg-slate-50/50 space-y-5">
-                                                        <div>
-                                                            <h4 className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-3 flex items-center gap-2">
-                                                                <User size={12} className="text-slate-300" /> Customer
-                                                            </h4>
-                                                            <div className="space-y-0.5">
-                                                                <p className="text-[12px] font-black text-slate-800 truncate">{order.customer?.name || order.user_id?.name || 'Guest User'}</p>
-                                                                <p className="text-[10px] font-bold text-slate-500 truncate">{order.customer?.email || order.user_id?.email}</p>
-                                                                {(order.customer?.phone || order.address?.mobile) && (
-                                                                    <p className="text-[10px] font-black text-slate-800 mt-1.5 flex items-center gap-1.5">
-                                                                        <span className="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>
-                                                                        {order.customer?.phone || order.address?.mobile}
-                                                                    </p>
-                                                                )}
-                                                            </div>
-                                                        </div>
-
-                                                        <div>
-                                                            <h4 className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-3 flex items-center gap-2">
-                                                                <MapPin size={12} className="text-slate-300" /> Delivery
-                                                            </h4>
-                                                            <div className="text-[11px] text-slate-600 font-bold leading-relaxed">
-                                                                <p className="text-slate-900 font-black mb-0.5">{order.address?.fullName || order.customer?.name}</p>
-                                                                <p className="line-clamp-1">{order.address?.line1 || 'No address line'}</p>
-                                                                {(order.address?.city || order.address?.state) && (
-                                                                    <p>{[order.address?.city, order.address?.state].filter(Boolean).join(', ')} {(order.address?.postalCode)}</p>
-                                                                )}
-                                                            </div>
-                                                        </div>
-                                                    </div>
-
-                                                    {/* 3. Logistics & Actions Section */}
-                                                    <div className="w-full lg:w-80 p-5 flex flex-col justify-between gap-6">
-                                                        <div className="space-y-4">
-                                                            <h4 className="text-[10px] font-black text-slate-400 uppercase tracking-widest flex items-center gap-2">
-                                                                <Truck size={12} className="text-slate-300" /> Logistics
-                                                            </h4>
-                                                            <div className="bg-white rounded-xl border border-slate-200 p-3 shadow-sm">
-                                                                <div className="flex items-center justify-between mb-2">
-                                                                    <span className="text-[9px] font-black text-slate-400 uppercase tracking-tighter">Tracking</span>
-                                                                    <span className="text-[10px] font-black text-[#2874f0] font-mono">{order.tracking?.trackingNumber || 'NOT GEN'}</span>
-                                                                </div>
-                                                                <div className="w-full bg-slate-100 h-1.5 rounded-full overflow-hidden">
-                                                                    <div className="bg-[#2874f0] h-full transition-all duration-700" style={{
-                                                                        width: order.status === 'Pending' ? '15%' :
-                                                                            order.status === 'Confirmed' ? '35%' :
-                                                                                order.status === 'Packed' ? '55%' :
-                                                                                    order.status === 'Shipped' ? '75%' :
-                                                                                        order.status === 'Delivered' ? '100%' : '0%'
-                                                                    }} />
-                                                                </div>
-                                                            </div>
-                                                        </div>
-
-                                                        <div className="grid grid-cols-1 gap-2">
+                                                        <div className="hidden lg:flex col-span-2 items-center justify-end gap-2">
                                                             {nextStatusMap[order.status] && (
                                                                 <button
                                                                     onClick={() => handleUpdateStatus(order._id, nextStatusMap[order.status])}
-                                                                    className="w-full py-2.5 bg-[#2874f0] text-white rounded-lg font-black text-[10px] uppercase tracking-widest hover:bg-[#1260e0] transition-all flex items-center justify-center gap-2 cursor-pointer shadow-sm active:scale-95"
+                                                                    className="px-3 py-1.5 bg-slate-900 text-white text-xs font-black rounded-md hover:bg-slate-800 transition-colors shadow-sm"
                                                                 >
-                                                                    Mark as {nextStatusMap[order.status]}
-                                                                </button>
-                                                            )}
-                                                            <button
-                                                                onClick={() => handleAddTracking(order._id)}
-                                                                className="w-full py-2.5 bg-white border border-slate-200 text-slate-700 rounded-lg font-black text-[10px] uppercase tracking-widest hover:border-[#2874f0] hover:text-[#2874f0] transition-all flex items-center justify-center gap-2 cursor-pointer active:scale-95"
-                                                            >
-                                                                {order.tracking?.trackingNumber ? 'Update Tracking' : 'Add Tracking ID'}
-                                                            </button>
-                                                            {order.status === 'Pending' && (
-                                                                <button
-                                                                    onClick={() => handleUpdateStatus(order._id, 'Cancelled')}
-                                                                    className="w-full py-2 text-red-500 font-black text-[9px] uppercase tracking-widest hover:bg-red-50 transition-all rounded-lg cursor-pointer"
-                                                                >
-                                                                    Cancel Order
+                                                                    {nextStatusMap[order.status]}
                                                                 </button>
                                                             )}
                                                         </div>
                                                     </div>
+
+                                                    {/* Expanded Details Inner Card */}
+                                                    <div className="p-4 lg:px-6 lg:pb-6 bg-slate-50/50 border-t border-slate-100">
+                                                        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                                                            
+                                                            {/* Column 1: Order Items */}
+                                                            <div className="bg-white p-5 rounded-xl border border-slate-200 shadow-sm">
+                                                                <h4 className="text-sm font-black text-slate-800 mb-4 pb-2 border-b border-slate-100 flex items-center gap-2">
+                                                                    <Package size={16} className="text-blue-500" /> Products Ordered
+                                                                </h4>
+                                                                <div className="space-y-4">
+                                                                    {order.items.map((item, idx) => (
+                                                                        <div key={idx} className="flex gap-3 items-center">
+                                                                            <div className="w-12 h-12 rounded-lg border border-slate-200 bg-slate-50 overflow-hidden shrink-0">
+                                                                                <img src={getImageUrl(item.imageUrl)} alt={item.name} className="w-full h-full object-cover" />
+                                                                            </div>
+                                                                            <div className="flex-1 min-w-0">
+                                                                                <div className="text-sm font-black text-slate-900 truncate">{item.name}</div>
+                                                                                <div className="text-xs font-bold text-slate-500 mt-0.5">
+                                                                                    {item.quantity} units × <span className="font-black text-slate-700">{formatCurrency(item.priceAtPurchase)}</span>
+                                                                                </div>
+                                                                            </div>
+                                                                        </div>
+                                                                    ))}
+                                                                </div>
+                                                                <div className="mt-4 pt-3 border-t border-slate-100 flex justify-between items-center">
+                                                                    <span className="text-sm font-black text-slate-500">Total Amount</span>
+                                                                    <span className="text-base font-black text-slate-900">{formatCurrency(order.sellerTotal || 0)}</span>
+                                                                </div>
+                                                            </div>
+
+                                                            {/* Column 2: Customer & Shipping */}
+                                                            <div className="bg-white p-5 rounded-xl border border-slate-200 shadow-sm flex flex-col gap-5">
+                                                                <div>
+                                                                    <h4 className="text-sm font-black text-slate-800 mb-3 pb-2 border-b border-slate-100 flex items-center gap-2">
+                                                                        <User size={16} className="text-emerald-500" /> Customer Information
+                                                                    </h4>
+                                                                    <div className="space-y-2.5">
+                                                                        <div className="flex items-start gap-2">
+                                                                            <span className="text-xs font-black text-slate-500 w-16 shrink-0 mt-0.5">Name:</span>
+                                                                            <span className="text-sm font-black text-slate-900">{order.customer?.name || order.user_id?.name || 'Guest User'}</span>
+                                                                        </div>
+                                                                        <div className="flex items-start gap-2">
+                                                                            <span className="text-xs font-black text-slate-500 w-16 shrink-0 mt-0.5">Email:</span>
+                                                                            <span className="text-sm font-bold text-slate-700 break-all">{order.customer?.email || order.user_id?.email || 'N/A'}</span>
+                                                                        </div>
+                                                                        <div className="flex items-start gap-2">
+                                                                            <span className="text-xs font-black text-slate-500 w-16 shrink-0 mt-0.5">Phone:</span>
+                                                                            <span className="text-sm font-black text-slate-900">{order.customer?.phone || order.address?.mobile || 'N/A'}</span>
+                                                                        </div>
+                                                                    </div>
+                                                                </div>
+
+                                                                <div>
+                                                                    <h4 className="text-sm font-black text-slate-800 mb-3 pb-2 border-b border-slate-100 flex items-center gap-2">
+                                                                        <MapPin size={16} className="text-red-500" /> Shipping Address
+                                                                    </h4>
+                                                                    <div className="bg-slate-50 p-3 rounded-lg border border-slate-100">
+                                                                        <p className="text-sm font-black text-slate-900 mb-1">{order.address?.fullName || order.customer?.name}</p>
+                                                                        <p className="text-xs font-bold text-slate-700 leading-relaxed">
+                                                                            {order.address?.line1 || 'No address line'}<br/>
+                                                                            {[order.address?.city, order.address?.state].filter(Boolean).join(', ')}<br/>
+                                                                            PIN: <span className="font-black text-slate-900">{order.address?.postalCode}</span>
+                                                                        </p>
+                                                                    </div>
+                                                                </div>
+                                                            </div>
+
+                                                            {/* Column 3: Logistics & Action */}
+                                                            <div className="bg-white p-5 rounded-xl border border-slate-200 shadow-sm flex flex-col justify-between">
+                                                                <div>
+                                                                    <h4 className="text-sm font-black text-slate-800 mb-4 pb-2 border-b border-slate-100 flex items-center gap-2">
+                                                                        <Truck size={16} className="text-orange-500" /> Logistics Control
+                                                                    </h4>
+                                                                    
+                                                                    <div className="mb-6">
+                                                                        <div className="flex items-center justify-between mb-2">
+                                                                            <span className="text-xs font-black text-slate-500">Tracking ID</span>
+                                                                            <span className="text-sm font-mono font-black text-slate-900 bg-slate-100 px-2 py-1 rounded-md border border-slate-200">
+                                                                                {order.tracking?.trackingNumber || 'UNASSIGNED'}
+                                                                            </span>
+                                                                        </div>
+                                                                        
+                                                                        <div className="mt-4 relative">
+                                                                            <div className="w-full bg-slate-100 h-2 rounded-full overflow-hidden border border-slate-200">
+                                                                                <div className="bg-[#2874f0] h-full transition-all" style={{
+                                                                                    width: order.status === 'Pending' ? '15%' :
+                                                                                        order.status === 'Confirmed' ? '35%' :
+                                                                                            order.status === 'Packed' ? '55%' :
+                                                                                                order.status === 'Shipped' ? '75%' :
+                                                                                                    order.status === 'Delivered' ? '100%' : '0%'
+                                                                                }} />
+                                                                            </div>
+                                                                            <div className="flex justify-between mt-2 text-[10px] font-black text-slate-400 uppercase tracking-widest">
+                                                                                <span>Processing</span>
+                                                                                <span>Shipped</span>
+                                                                                <span>Delivered</span>
+                                                                            </div>
+                                                                        </div>
+                                                                    </div>
+                                                                </div>
+
+                                                                <div className="flex flex-col gap-2 mt-4">
+                                                                    {nextStatusMap[order.status] && (
+                                                                        <button
+                                                                            onClick={() => handleUpdateStatus(order._id, nextStatusMap[order.status])}
+                                                                            className="w-full py-2.5 bg-slate-900 text-white text-sm font-black rounded-lg hover:bg-slate-800 transition-colors shadow-sm"
+                                                                        >
+                                                                            Mark as {nextStatusMap[order.status]}
+                                                                        </button>
+                                                                    )}
+                                                                    <button
+                                                                        onClick={() => handleAddTracking(order._id)}
+                                                                        className="w-full py-2.5 bg-white border border-slate-300 text-slate-700 text-sm font-black rounded-lg hover:bg-slate-50 transition-colors shadow-sm"
+                                                                    >
+                                                                        {order.tracking?.trackingNumber ? 'Edit Tracking ID' : 'Add Tracking ID'}
+                                                                    </button>
+                                                                    {order.status === 'Pending' && (
+                                                                        <button
+                                                                            onClick={() => handleUpdateStatus(order._id, 'Cancelled')}
+                                                                            className="w-full mt-1 py-2 text-red-600 border border-transparent text-xs font-black hover:bg-red-50 hover:border-red-200 rounded-lg transition-colors"
+                                                                        >
+                                                                            Cancel Order
+                                                                        </button>
+                                                                    )}
+                                                                </div>
+                                                            </div>
+
+                                                        </div>
+                                                    </div>
                                                 </div>
-                                            </div>
-                                        ))}
+                                            ))}
+                                        </div>
                                     </div>
                                 )}
                             </div>
@@ -967,14 +1070,14 @@ export default function SellerDashboard() {
                         {activeTab === 'analytics' && (
                             <div className="space-y-8">
                                 {/* KPI Summary Row */}
-                                <div className="grid grid-cols-2 lg:grid-cols-4 gap-6">
+                                <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6">
                                     {[
                                         { label: 'Total Revenue', value: formatCurrency(stats.totalSales), sub: '+12.5% vs last month', icon: IndianRupee, color: 'text-primary bg-blue-50' },
                                         { label: 'Avg. Order Value', value: formatCurrency(stats.totalOrders > 0 ? stats.totalSales / stats.totalOrders : 0), sub: 'Stable', icon: BarChart3, color: 'text-emerald-600 bg-emerald-50' },
                                         { label: 'Total Orders', value: stats.totalOrders, sub: 'Lifetime volume', icon: ShoppingCart, color: 'text-orange-600 bg-orange-50' },
                                         { label: 'Conversion Rate', value: '3.2%', sub: 'High performance', icon: TrendingUp, color: 'text-purple-600 bg-purple-50' }
                                     ].map((kpi, idx) => (
-                                        <div key={idx} className="bg-white p-6 rounded-[20px] border border-slate-200 shadow-sm hover:shadow-md transition-all">
+                                        <div key={idx} className="bg-white p-4 sm:p-6 rounded-[20px] border border-slate-200 shadow-sm hover:shadow-md transition-all">
                                             <div className={`w-10 h-10 rounded-xl flex items-center justify-center mb-4 ${kpi.color}`}>
                                                 <kpi.icon size={18} strokeWidth={2.5} />
                                             </div>
@@ -987,13 +1090,13 @@ export default function SellerDashboard() {
 
                                 <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
                                     {/* Revenue Trends Chart (Large) */}
-                                    <div className="lg:col-span-2 bg-white rounded-[32px] border border-slate-100 p-8 shadow-sm">
-                                        <div className="flex justify-between items-center mb-8">
+                                    <div className="lg:col-span-2 bg-white rounded-[24px] sm:rounded-[32px] border border-slate-100 p-5 sm:p-8 shadow-sm">
+                                        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6 sm:mb-8 gap-4 sm:gap-0">
                                             <div>
                                                 <h3 className="text-xl font-[1000] text-slate-900 tracking-tight">Revenue Trends</h3>
                                                 <p className="text-sm text-slate-500 font-bold">Sales performance over the last 7 days</p>
                                             </div>
-                                            <div className="flex gap-2">
+                                            <div className="flex flex-wrap gap-2">
                                                 <div className="flex items-center gap-1.5 px-3 py-1.5 bg-slate-50 rounded-lg text-[10px] font-black uppercase text-slate-400">
                                                     <div className="w-2 h-2 rounded-full bg-primary"></div> Revenue
                                                 </div>
@@ -1059,8 +1162,8 @@ export default function SellerDashboard() {
                                     </div>
 
                                     {/* Status Distribution Pie Chart */}
-                                    <div className="bg-white rounded-[24px] border border-slate-200 p-8 shadow-sm flex flex-col">
-                                        <h3 className="text-lg font-black text-slate-900 tracking-tight mb-8">Order Status Mix</h3>
+                                    <div className="bg-white rounded-[24px] sm:rounded-[32px] border border-slate-200 p-5 sm:p-8 shadow-sm flex flex-col">
+                                        <h3 className="text-lg font-black text-slate-900 tracking-tight mb-6 sm:mb-8">Order Status Mix</h3>
                                         <div className="flex-1 min-h-[250px] relative">
                                             {(() => {
                                                 const statusMap = {};
@@ -1103,8 +1206,8 @@ export default function SellerDashboard() {
 
                                 {/* Bottom Grid: Top Performers & Low Stock */}
                                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-                                    <div className="bg-white rounded-[32px] border border-slate-100 p-8 shadow-sm">
-                                        <div className="flex justify-between items-center mb-8">
+                                    <div className="bg-white rounded-[24px] sm:rounded-[32px] border border-slate-100 p-5 sm:p-8 shadow-sm">
+                                        <div className="flex justify-between items-center mb-6 sm:mb-8">
                                             <h3 className="text-xl font-[1000] text-slate-900 tracking-tight">Product Leaderboard</h3>
                                             <div className="w-10 h-10 bg-blue-50 text-primary rounded-xl flex items-center justify-center">
                                                 <TrendingUp size={18} strokeWidth={2.5} />
@@ -1143,8 +1246,8 @@ export default function SellerDashboard() {
                                         </div>
                                     </div>
 
-                                    <div className="bg-white rounded-[32px] border border-slate-100 p-8 shadow-sm">
-                                        <div className="flex justify-between items-center mb-8">
+                                    <div className="bg-white rounded-[24px] sm:rounded-[32px] border border-slate-100 p-5 sm:p-8 shadow-sm">
+                                        <div className="flex justify-between items-center mb-6 sm:mb-8">
                                             <h3 className="text-xl font-[1000] text-slate-900 tracking-tight">Critical Inventory</h3>
                                             <div className="w-10 h-10 bg-red-50 text-red-500 rounded-xl flex items-center justify-center">
                                                 <AlertCircle size={18} strokeWidth={2.5} />

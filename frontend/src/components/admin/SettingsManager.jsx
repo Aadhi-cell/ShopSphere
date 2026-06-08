@@ -5,7 +5,7 @@ import { Settings, Shield, Plus, X, Save, Edit3, Trash2, ShieldCheck, Mail, Phon
 export default function SettingsManager() {
     const [activeTab, setActiveTab] = useState('general'); // 'general' | 'admins'
     const [admins, setAdmins] = useState([]);
-    const [settings, setSettings] = useState({ siteTitle: '', logoUrl: '', supportEmail: '', phone: '', address: '' });
+    const [settings, setSettings] = useState({ siteTitle: '', logoUrl: '', supportEmail: '', phone: '', address: '', platformCommissionRate: 10, platformFee: 7 });
     const [loading, setLoading] = useState(true);
     const [showAddAdmin, setShowAddAdmin] = useState(false);
     const [newAdminData, setNewAdminData] = useState({ name: '', email: '', password: '', role: 'admin' });
@@ -245,6 +245,40 @@ export default function SettingsManager() {
                                     <div>
                                         <label className="block text-[12px] font-bold text-slate-700 uppercase tracking-wider mb-2">Brand Logo URL</label>
                                         <input value={settings.logoUrl || ''} onChange={e => setSettings({ ...settings, logoUrl: e.target.value })} className="w-full px-4 py-3 rounded-xl border border-slate-200 bg-white text-[14px] font-semibold text-slate-900 outline-none focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 transition-all shadow-sm" placeholder="https://" />
+                                    </div>
+                                </div>
+                            </div>
+
+                            {/* Platform Pricing & Charges */}
+                            <div>
+                                <h3 className="text-sm font-black text-slate-400 uppercase tracking-widest mb-4 flex items-center gap-2">
+                                    <ShieldCheck size={16} /> Platform Pricing & Charges
+                                </h3>
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-6 p-6 rounded-2xl bg-slate-50 border border-slate-100">
+                                    <div>
+                                        <label className="block text-[12px] font-bold text-slate-700 uppercase tracking-wider mb-2">Platform Commission Rate (%)</label>
+                                        <input 
+                                            type="number"
+                                            required
+                                            min="0"
+                                            max="100"
+                                            value={settings.platformCommissionRate !== undefined ? settings.platformCommissionRate : 10} 
+                                            onChange={e => setSettings({ ...settings, platformCommissionRate: Number(e.target.value) })} 
+                                            className="w-full px-4 py-3 rounded-xl border border-slate-200 bg-white text-[14px] font-semibold text-slate-900 outline-none focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 transition-all shadow-sm" 
+                                            placeholder="e.g. 10" 
+                                        />
+                                    </div>
+                                    <div>
+                                        <label className="block text-[12px] font-bold text-slate-700 uppercase tracking-wider mb-2">Checkout Platform Fee (₹)</label>
+                                        <input 
+                                            type="number"
+                                            required
+                                            min="0"
+                                            value={settings.platformFee !== undefined ? settings.platformFee : 7} 
+                                            onChange={e => setSettings({ ...settings, platformFee: Number(e.target.value) })} 
+                                            className="w-full px-4 py-3 rounded-xl border border-slate-200 bg-white text-[14px] font-semibold text-slate-900 outline-none focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 transition-all shadow-sm" 
+                                            placeholder="e.g. 7" 
+                                        />
                                     </div>
                                 </div>
                             </div>

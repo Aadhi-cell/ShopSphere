@@ -34,6 +34,8 @@ export const CartProvider = ({ children }) => {
         } catch (e) {
           console.error('Failed to load cart', e);
         }
+      } else {
+        setCart([]);
       }
     };
 
