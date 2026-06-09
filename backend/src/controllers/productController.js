@@ -2,6 +2,7 @@ const Product = require('../models/Product');
 const Seller = require('../models/Seller');
 const Review = require('../models/Review');
 const Order = require('../models/Order');
+const { getUploadedUrls } = require('../utils/fileHelper');
 
 
 class ProductController {
@@ -112,7 +113,7 @@ class ProductController {
             const order = await Order.findOne({ user_id: req.user._id, 'items.productId': req.params.id });
             const isVerified = !!order;
 
-            const reviewImages = req.files ? req.files.map(file => `/uploads/reviews/${file.filename}`) : [];
+            const reviewImages = getUploadedUrls(req.files, '/uploads/reviews');
 
             const review = new Review({
                 user_id: req.user._id,

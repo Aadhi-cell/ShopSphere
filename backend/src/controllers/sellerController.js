@@ -7,6 +7,7 @@ const SellerSession = require('../models/SellerSession');
 const Payout = require('../models/Payout');
 const Review = require('../models/Review');
 const Notification = require('../models/Notification');
+const { getUploadedUrl, getUploadedUrls } = require('../utils/fileHelper');
 
 
 const SellerOTP = require('../models/SellerOTP');
@@ -79,8 +80,7 @@ class SellerController {
 
             let idProofUrl = req.body.idProofUrl || '';
             if (req.file) {
-                // Return relative path for frontend to resolve or full static path
-                idProofUrl = `/uploads/seller_docs/${req.file.filename}`;
+                idProofUrl = getUploadedUrl(req.file, '/uploads/seller_docs');
             }
 
             const trimmedEmail = email.trim().toLowerCase();
@@ -230,10 +230,10 @@ class SellerController {
 
             if (req.files) {
                 if (req.files['image'] && req.files['image'][0]) {
-                    finalImageUrl = `/uploads/products/${req.files['image'][0].filename}`;
+                    finalImageUrl = getUploadedUrl(req.files['image'][0], '/uploads/products');
                 }
                 if (req.files['additionalImages']) {
-                    finalImages = req.files['additionalImages'].map(file => `/uploads/products/${file.filename}`);
+                    finalImages = getUploadedUrls(req.files['additionalImages'], '/uploads/products');
                 }
             }
 
@@ -307,10 +307,10 @@ class SellerController {
             // 2. Handle Images from Multer
             if (req.files) {
                 if (req.files['image'] && req.files['image'][0]) {
-                    updateData.imageUrl = `/uploads/products/${req.files['image'][0].filename}`;
+                    updateData.imageUrl = getUploadedUrl(req.files['image'][0], '/uploads/products');
                 }
                 if (req.files['additionalImages']) {
-                    const additionalPaths = req.files['additionalImages'].map(file => `/uploads/products/${file.filename}`);
+                    const additionalPaths = getUploadedUrls(req.files['additionalImages'], '/uploads/products');
                     let currentImages = [];
                     if (typeof updateData.images === 'string' && updateData.images.trim()) {
                         currentImages = updateData.images.split(',').map(s => s.trim()).filter(Boolean);
@@ -666,11 +666,11 @@ class SellerController {
             if (!seller) return res.status(404).json({ message: 'Seller not found' });
 
             if (req.files.aadhaar) {
-                seller.aadhaarUrl = `/uploads/seller_docs/${req.files.aadhaar[0].filename}`;
+                seller.aadhaarUrl = getUploadedUrl(req.files.aadhaar[0], '/uploads/seller_docs');
                 seller.idProofUrl = seller.aadhaarUrl; // For compatibility
             }
             if (req.files.panCard) {
-                seller.panCardUrl = `/uploads/seller_docs/${req.files.panCard[0].filename}`;
+                seller.panCardUrl = getUploadedUrl(req.files.panCard[0], '/uploads/seller_docs');
             }
 
             seller.onboardingStep = 4;

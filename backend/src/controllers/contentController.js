@@ -1,6 +1,7 @@
 const Banner = require('../models/Banner');
 const Page = require('../models/Page');
 const Announcement = require('../models/Announcement');
+const { getUploadedUrl } = require('../utils/fileHelper');
 
 // --- Banners ---
 exports.getActiveBanners = async (req, res) => {
@@ -66,7 +67,7 @@ exports.createBanner = async (req, res) => {
     try {
         const insertData = { ...req.body };
         if (req.file) {
-            insertData.imageUrl = `/uploads/banners/${req.file.filename}`;
+            insertData.imageUrl = getUploadedUrl(req.file, '/uploads/banners');
         }
         const banner = new Banner(insertData);
         await banner.save();
@@ -80,7 +81,7 @@ exports.updateBanner = async (req, res) => {
     try {
         const updateData = { ...req.body };
         if (req.file) {
-            updateData.imageUrl = `/uploads/banners/${req.file.filename}`;
+            updateData.imageUrl = getUploadedUrl(req.file, '/uploads/banners');
         }
         const banner = await Banner.findByIdAndUpdate(req.params.id, updateData, { new: true });
         res.json(banner);

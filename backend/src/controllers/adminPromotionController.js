@@ -1,6 +1,7 @@
 const PromotionRequest = require('../models/PromotionRequest');
 const Banner = require('../models/Banner');
 const Notification = require('../models/Notification');
+const { getUploadedUrl } = require('../utils/fileHelper');
 
 exports.getAllRequests = async (req, res) => {
     try {
@@ -85,7 +86,7 @@ exports.createBannerFromRequest = async (req, res) => {
             title, subtitle, tagline, label, offer, bankOffer, color, bg,
             buttonText, redirectLink, status, startDate, endDate, priority, bannerType, promotionRequestId, sellerId
         } = req.body;
-        const imageUrl = req.file ? `/uploads/banners/${req.file.filename}` : req.body.imageUrl;
+        const imageUrl = req.file ? getUploadedUrl(req.file, '/uploads/banners') : req.body.imageUrl;
 
         if (!imageUrl) {
             return res.status(400).json({ message: 'Banner image is required' });

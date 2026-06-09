@@ -5,6 +5,7 @@ const OrderItem = require('../models/OrderItem');
 const User = require('../models/User');
 const { sendOrderConfirmation } = require('../services/emailService');
 const Notification = require('../models/Notification');
+const { getUploadedUrls } = require('../utils/fileHelper');
 
 class OrderController {
     constructor() {
@@ -460,7 +461,7 @@ class OrderController {
             }
 
             // Extract proof images from multer
-            const proofImages = req.files ? req.files.map(file => `/uploads/returns/${file.filename}`) : [];
+            const proofImages = getUploadedUrls(req.files, '/uploads/returns');
 
             // Parse refund details if sent as stringified JSON
             let parsedRefundDetails = {};

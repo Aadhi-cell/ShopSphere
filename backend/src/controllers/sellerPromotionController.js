@@ -1,6 +1,7 @@
 const stripe = require('stripe')(process.env.STRIPE_SECRET_KEY);
 const PromotionRequest = require('../models/PromotionRequest');
 const Banner = require('../models/Banner');
+const { getUploadedUrl } = require('../utils/fileHelper');
 
 exports.createPromotionRequest = async (req, res) => {
     try {
@@ -42,7 +43,7 @@ exports.createPromotionRequest = async (req, res) => {
 
         let bannerUrl = req.body.bannerUrl;
         if (req.file) {
-            bannerUrl = `/uploads/banners/${req.file.filename}`;
+            bannerUrl = getUploadedUrl(req.file, '/uploads/banners');
         }
 
         const requestData = {
